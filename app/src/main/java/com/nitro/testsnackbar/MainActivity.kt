@@ -4,12 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Snackbar
 import androidx.compose.material.Surface
@@ -31,12 +30,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TestSnackbarTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    Screen()
-                }
-            }
+//            TestSnackbarTheme {
+            // A surface container using the 'background' color from the theme
+//                Surface(color = MaterialTheme.colors.background) {
+            Screen()
+//                }
+//            }
         }
     }
 }
@@ -47,17 +46,32 @@ fun Cell(text: String) {
         text = text,
         Modifier
             .fillMaxWidth()
-            .background(backgroundCell)
             .height(64.dp)
             .padding(16.dp)
     )
 }
 
 @Composable
-fun Content(modifier: Modifier = Modifier) {
-    LazyColumn(modifier = modifier) {
+fun ListContent(modifier: Modifier) {
+    LazyColumn() {
         items(contentItems) { message ->
             Cell(text = message)
+        }
+    }
+}
+
+@Composable
+fun ScrollContent(modifier: Modifier = Modifier) {
+    val scrollstate = rememberScrollState()
+    Column(
+        Modifier
+            .background(backgroundCell)
+            .verticalScroll(scrollstate)
+            .then(modifier)
+
+    ) {
+        contentItems.forEach {
+            Cell(text = it)
         }
     }
 }
@@ -66,17 +80,18 @@ fun Content(modifier: Modifier = Modifier) {
 fun Screen() {
     var snackbarHeight = remember { mutableStateOf(0) }
     Box {
-        Content(Modifier.layout { measurable, constraints ->
+        ScrollContent(Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints.offset(0, -snackbarHeight.value))
             val height = constraints.constrainHeight(placeable.height + snackbarHeight.value)
 
-            layout(placeable.width, placeable.height) {
+            layout(placeable.width, height) {
                 placeable.place(0, 0)
             }
         })
         Snackbar(
             modifier = Modifier
                 .background(Color.Transparent)
+                .padding(16.dp)
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints)
                     snackbarHeight.value = placeable.height
@@ -85,7 +100,7 @@ fun Screen() {
                     }
                 }
                 .align(Alignment.BottomCenter)
-                .padding(16.dp)
+
         ) {
             Text(text = "my Snackbar")
         }
